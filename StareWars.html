@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+         * { box-sizing:border-box; margin:0; overflow:hidden; padding:0; pointer-events:none; user-select:none; }
+         body, html { height:100%; width:100%; }
+         body { background-color:#202830; display:grid; }
+         button { border-radius:16px; border-style:solid; border-width:4px; border-color:#202830; color:#202830; cursor:pointer; 
+         font-size:1.2em; font-weight:600; padding:8px; pointer-events:all; position:fixed; }
+         #demarrer{
+              top:40px; 
+              left:30px  
+         }
+         #pause{
+              top:40px; 
+              left:100px
+         }
+         div { border-style:double; border-color:#202830; color:#202830; cursor:pointer; 
+         font-size:1.2em; font-weight:600; padding:8px; pointer-events:all; position:fixed; top:20px; left:1250px; }
+         #resultat  { 
+                top:40px; 
+                left:1210px; }
+        #score { 
+                top:40px; 
+                left:1290px; }
+
+         #playground {
+            background:url("desert_sand.jpg"); align-self:center; justify-self:center;border-style:solid;
+             border-width: 4px ; border-color:black;
+
+         }
+
+    </style>
+    <title>Star Wars</title>
+</head>
+<body>
+      
+    <button id = "demarrer">Play</button>
+    <button id = "pause">Pause</button>
+     
+    <div id="resultat">Score =</div>
+    <div id ="score">0</div>
+     
+    <canvas id="playground">Oh non ! votre navigateur n'accepte pas Canvas</canvas>
+    
+    <script>
+        // recuperation de l'élélement canvas en javascript
+        let canvas1 = document.getElementById("playground");
+       // création de la variable contexte,  l'outil réel que nous pouvons utiliser pour peindre sur Canvas.
+        let contexte = canvas1.getContext("2d");
+        contexte.fillText("score",200,100);
+        width = window.innerWidth;
+        height = window.innerHeight
+        //donner une taille au canvas.
+        canvas1.width = width-40;
+        canvas1.height = height-40; 
+
+      let d1;
+       let dx ;
+       let dy ;
+       let d ;
+         // fonction qui permet d'activer les deux bouton pause et démarrer 
+        let boutons = function(){
+            ["click", "touchstart"].map(type => document.getElementById("pause").addEventListener(type, (event) => { event.preventDefault();
+                                   d1 = 0;
+                                   dx = 0;
+                                   dy = 0;
+                                   d=0;   
+                            }));
+
+       ["click", "touchstart"].map(type => document.getElementById("demarrer").addEventListener(type, (event) => { event.preventDefault();
+                                   d1 = 15;
+                                   dx = 10; 
+                                   dy = -10;
+                                   d=10 ;    
+                            }));
+
+        }
+        
+       // boutons();
+      
+
+        function Position(x=0,y=0) {
+              // Test si la fonction est appelé sans new
+              if (this == undefined || this == window) {
+                // on crée un nouvel objet par new que l'on rend
+                return new Position(x,y);
+                     }
+                     else {
+                            this.x = x;
+                            this.y = y;
+
+                     }
+        }
+             
+              // la classe Sprite
+              class Sprite  {
+      
+           constructor(pos=Position(),imgPath="",insideDOM=window.document.getElementById("playground")){
+                     this.imgPath = imgPath;
+                     this.pos= pos;
+                     this.domImage = new Image();
+                     this.domImage.src = imgPath;
+                     //drawImage permet de dessiner l'image qu'on veut importer sur le canvas.
+                     this.domImage.onload = function(){
+                            contexte.drawImage(this,pos.x,pos.y);
+                        }
+                     insideDOM.appendChild(this.domImage);
+               
+                                 }
+                    // recuperation de la position d'un Sprite
+                       getPos(){
+                                        let pos =  {
+                                        x : this.pos.x,
+                                        y : this.pos.y
+
+                                        }                                       
+                                        return(pos);                
+                            }
+                    // récuperation de la taile d'un Sprite ( width, height)
+                    /*cette methode je l'ai pas utilisé dans mon code car clientHeight et clientHeight ne fonctionne pas correctement
+                     sur chrome et elle fonctionne bien sur mozilla*/ 
+                    getSize(){
+                            let size = {
+                                   width : this.domImage.clientHeight,
+                                   height : this.domImage.clientHeight, 
+                                  
+                            }
+                            return (size);
+                     }   
+           }
+
+
+           // la classe Robot
+           // variables pour la position du robot
+        let pos_X = canvas1.width/2-40;
+        let pos_Y = canvas1.height-80;
+
+           class Robot extends Sprite {
+                 constructor(pos=Position(),imgPath="",insideDOM=window.document.getElementById("playground")){
+                        super(pos=Position(pos_X,pos_Y ),imgPath="R2D2.png",insideDOM);    
+                 }
+
+           }
+
+           //classe Ennemi
+           // choix aléatoire de la position de l'ennemi sur l'axe x. 
+           class Ennemi extends Sprite{
+            constructor(pos=Position(),imgPath="",insideDOM=window.document.getElementById("playground")){
+                        super(pos=Position(Math.floor(Math.random()* (canvas1.width-128),0)) 
+                        ,imgPath="darthvader.png",insideDOM);    
+                 }
+   
+           }
+
+           //classe Avion
+           /* a partir d'un tableau difAvions qui contient tout les modéles des avions un choix aleatoir d'un modele d'avion
+           se fais grace a l'objet Math*/
+           let difAvions = ["x_wing.png", "obi_wan_starfighter.png", "naboo_starfighter.png", "anakin_starfighter.png"];
+           //choix aleatoir de la position d'un avion a partir du haut y=0
+         
+           class Avion extends Sprite{
+              constructor(pos=Position(),imgPath="",insideDOM=window.document.getElementById("playground")){
+                       super(pos=Position(Math.floor(Math.random()*(canvas1.width-128)),-128),
+                       imgPath=difAvions[Math.floor(Math.random()*(difAvions.length))],insideDOM);    
+      
+                 }
+           }
+
+           // création de deux objets ENNEMI ET ROBOT
+           let r2d2 = new Robot();
+           let ennemi = new Ennemi();
+
+           let score = 5;
+
+           
+             /////////////////////////////////////////////////////////////
+            //////faire bouger le robot avec les touche du clavier///////
+           /////////////////////////////////////////////////////////////
+
+           // tableau qui contient les touches du clavier pressés
+              let keys = [];
+              
+                     document.addEventListener("keydown", keyDownHandler, false);
+                     document.addEventListener("keyup", keyUpHandler, false);
+
+                     function keyDownHandler(e) {
+                            //left arrow: code 37; up arrow: code 38; right arrow: code 39; down arrow: code 10
+                                if(e.keyCode == 37 |e.keyCode == 38 |e.keyCode == 39 | e.keyCode == 40) {
+                            keys[e.keyCode] = true;
+                            console.log(e.key)  ;  
+                                 }
+                                }
+                     function keyUpHandler(e) {
+                               if(e.keyCode == 37 |e.keyCode == 38 |e.keyCode == 39 | e.keyCode == 40) {
+                               keys[e.keyCode] = false;
+                               console.log(e.key)  ;       
+                                                       }
+                                }
+
+                               r2d2.update =  function (){
+                                       //si touche feleche gauche
+                                       if(keys[37]  && r2d2.pos.x>=0){
+                                         /* la methode clearRect() prend en compte quatre paramètres: les coordonnées x et y du coin supérieur 
+                                        gauche d'un rectangle et les coordonnées x et y du coin inférieur droit d'un rectangle. Toute la zone
+                                         couverte par ce rectangle sera effacée */
+                                         /*le declacement des Sprite se fait grace au deux methodes: drawImage qui dessine une copie avc de
+                                          nouvelle coordonnées x et y et la methode clearRect qui supprime la copie precedente ce qui donne
+                                          allusion que les Sprites bougent "la notion de sprite"*/
+                                        contexte.clearRect(r2d2.pos.x, r2d2.pos.y, 83, 94);
+                                        contexte.drawImage(r2d2.domImage,r2d2.pos.x-15,r2d2.pos.y);
+                                        r2d2.pos.x -=d1;
+                                                                                           
+                                       }
+                                    //si touche feleche haut
+                                       else if (keys[38] && r2d2.pos.y>= 15){
+                                        contexte.clearRect(r2d2.pos.x, r2d2.pos.y, 83, 94);
+                                         contexte.drawImage(r2d2.domImage,r2d2.pos.x,r2d2.pos.y-15);
+                                        r2d2.pos.y -=d1;
+          
+                                       }
+                                       //si touche feleche droite
+                                       else if(keys[39] && r2d2.pos.x<= canvas1.width-83){
+                                        contexte.clearRect(r2d2.pos.x, r2d2.pos.y, 83, 94);
+                                        contexte.drawImage(r2d2.domImage,r2d2.pos.x+15,r2d2.pos.y);
+                                        r2d2.pos.x +=d1;
+                                       
+                                       }
+                                       //si touche feleche bas
+                                       else if(keys[40] && r2d2.pos.y<= canvas1.height-94){
+                                        contexte.clearRect(r2d2.pos.x, r2d2.pos.y, 83, 94);
+                                        contexte.drawImage(r2d2.domImage,r2d2.pos.x,r2d2.pos.y+15);
+                                        r2d2.pos.y += d1;
+                                       }
+                                    
+                        }
+
+                        /* Pour que la fonction r2d2.update s'exécute de façon répétée avec JavaScript, j'ai utilisé la méthode 
+                        setInterval() */
+                        let boucle01 = setInterval(r2d2.update,30);
+                       
+                        
+
+            ////////////////////////////////////
+           ///////faire bouger l'ennemi////////
+          ////////////////////////////////////
+           
+            /* afin d'ajouter une valeur à x et y après que chaque image ait été déssinée afin de faire croire que l'ennemi bouge.
+            On définit ces valeurs comme dx et dy avec comme valeurs respectives 1 et -1 */
+                         dx = 0;
+                         dy = 0;        
+                            ennemi.update= function() {
+                            contexte.clearRect(ennemi.pos.x-dx-1, ennemi.pos.y-dy, 128, 128);
+                            contexte.drawImage(ennemi.domImage,ennemi.pos.x-1 ,ennemi.pos.y ); 
+                            CollisionEnnemi();
+                           document.getElementById("score").innerHTML = score;
+                            if ( score === 0   ){
+                                   alert("Game Over");
+                            }
+                            /* collision avec les murs: si l'ennemi touche les murs du canvas alors j'ai fais rebondir l'ennemi 
+                            sur les murs en inversant sa direction. */
+                            if(ennemi.pos.y + dy < 2 || ennemi.pos.y+dy> canvas1.height-128 ) {
+                            dy = -dy;
+                            }
+                            if (ennemi.pos.x+ dx > canvas1.width-128 || ennemi.pos.x + dx <2){
+                            dx = -dx;
+                            }
+                            ennemi.pos.x += dx;
+                            ennemi.pos.y += dy; 
+                            contexte.clearRect(r2d2.pos.x, r2d2.pos.y, 83, 94);
+                             contexte.drawImage(r2d2.domImage,r2d2.pos.x,r2d2.pos.y);     
+                            }
+                           let boucle02 =  setInterval(ennemi.update, 30);
+
+            //////////////////////////////////////
+           ///////faire bouger les avions////////
+          //////////////////////////////////////
+
+          
+                 // d c'est la distance avec laquelle les avions vont se deplacer initiliser dans la fnction boutons()
+               let bougerAvion = function (avion= new Avion()){
+                    this.avion =  avion;
+                  avion.update= function() {  
+                    if (((Math.abs((r2d2.getPos().x)-(avion.getPos().x))<= 130) && (Math.abs((r2d2.getPos().y)-(avion.getPos().y))<= 130))) {
+                     score += 1;
+                     document.getElementById("score").innerHTML = score;
+                       contexte.clearRect(avion.pos.x, avion.pos.y-d, 128, 128);
+                       clearInterval(boucle03);
+                       bougerAvion();
+                      } else if(score===15){
+                            alert("C'est gagné, Bravo!");
+                            /* La fonction document.location.reload() recharge la page et redémarre le jeu au clic sur le bouton d'alerte*/
+                           document.location.reload();
+                           clearInterval(boucle03);
+                            
+
+                      }else if(avion.pos.y + d < canvas1.height) {
+                    contexte.clearRect(avion.pos.x, avion.pos.y-d, 128, 128);
+                    contexte.drawImage(avion.domImage,avion.pos.x ,avion.pos.y );  
+                        avion.pos.y += d;
+                       
+                     
+                      } else {
+                            contexte.clearRect(avion.pos.x, avion.pos.y-d, 128, 128);
+                            /*La méthode clearInterval () efface un ensemble de temporisations avec la méthode setInterval () soit dans le cas 
+                            d'une collision ou dans le cas ou l'avion arrive sort du canvas */
+                       clearInterval(boucle03);
+                      
+                       bougerAvion();
+                      }
+                      
+                      contexte.clearRect(ennemi.pos.x-dx, ennemi.pos.y-dy, 128, 128);
+                      contexte.drawImage(ennemi.domImage,ennemi.pos.x-1 ,ennemi.pos.y );
+
+                      }
+                      let boucle03 = setInterval(avion.update, 30);   
+                 }
+               
+               bougerAvion();
+               // appel de la fonction boutons qui permet d'activé les boutons pause et demarrer
+               boutons();
+
+
+                ////////////////////////////////////
+               ////detection des collisions////////
+              ////////////////////////////////////
+
+              function CollisionEnnemi() {
+                   if((Math.abs((r2d2.getPos().x)-(ennemi.getPos().x))<= 130) && (Math.abs((r2d2.getPos().y)-(ennemi.getPos().y))<= 130)){ 
+                     contexte.clearRect(ennemi.pos.x-dx-10, ennemi.pos.y-dy-10, 170, 170);
+                     ennemi.pos.x = Math.floor(Math.random()* (canvas1.width-128));
+                     ennemi.pos.y = 0;
+                     score--;
+                  
+                    
+                     //drawScore();
+                     if(score<=0){
+                            alert("GAME OVER !");
+                           document.location.reload();
+                           clearInterval(interval);
+
+                     }
+
+                   }
+                  
+           }          
+           let CollisionAvions = function() {
+                   if((Math.abs((r2d2.getPos().x)-(avion.getPos().x))<= 130) && (Math.abs((r2d2.getPos().y)-(avion.getPos().y))<= 130)){ 
+                     
+                     return true;
+              }   }
+     // quand le score ===  15 le joueur gagne et si le score=== 0 le joueur va perdre.
+     
+    </script>
+</body>
+</html>
